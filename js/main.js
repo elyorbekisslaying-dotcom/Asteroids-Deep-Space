@@ -1,0 +1,10 @@
+'use strict';
+const game=new Game(document.getElementById('space'));
+const controls=new Set(['KeyW','KeyA','KeyD','ArrowUp','ArrowLeft','ArrowRight','Space','Escape']);
+window.addEventListener('keydown',e=>{if(controls.has(e.code)&&(game.state==='playing'||!(e.code==='Space'&&e.target.tagName==='BUTTON')))e.preventDefault();if(e.code==='Escape'&&!e.repeat)game.pause();else if(game.state==='playing'&&controls.has(e.code))game.keys.add(e.code);});
+window.addEventListener('keyup',e=>game.keys.delete(e.code));
+window.addEventListener('blur',()=>{game.keys.clear();if(game.state==='playing')game.pause();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&game.state==='playing')game.pause();});
+window.addEventListener('resize',()=>game.resize());
+window.addEventListener('pagehide',()=>{try{localStorage.setItem('deepSpaceBest',String(game.best));}catch(e){}});
+let previous=performance.now();function frame(now){const dt=Math.min((now-previous)/1000,.04);previous=now;game.update(dt);game.draw();requestAnimationFrame(frame);}requestAnimationFrame(frame);
