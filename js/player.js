@@ -1,38 +1,29 @@
 class Player{
  constructor(w,h){this.x=w/2;this.y=h/2;this.vx=0;this.vy=0;this.angle=-Math.PI/2;this.cooldown=0;this.invincible=2.5;this.thrust=false;}
  update(dt, game) {
-  const { pointer, build, keys, bindings } = game;
-  if (pointer && Math.hypot(pointer.x - this.x, pointer.y - this.y) > 4) {
-   this.angle = Math.atan2(pointer.y - this.y, pointer.x - this.x);
-  }
-  this.thrust = keys.has(bindings.thrust);
-  if (this.thrust) {
-   this.vx += Math.cos(this.angle) * build.acceleration * dt;
-   this.vy += Math.sin(this.angle) * build.acceleration * dt;
-   game.particles.exhaust(this, dt);
-  }
-  const speed = Math.hypot(this.vx, this.vy);
-  if (speed > build.speed) {
-   this.vx *= build.speed / speed;
-   this.vy *= build.speed / speed;
-  }
-  this.vx *= Math.exp(-.19 * dt);
-  this.vy *= Math.exp(-.19 * dt);
-  const nextX = this.x + this.vx * dt;
-  const nextY = this.y + this.vy * dt;
-  this.x = (nextX + game.w) % game.w;
-  this.y = (nextY + game.h) % game.h;
-  for (const drone of game.drones) {
-   drone.x += this.x - nextX;
-   drone.y += this.y - nextY;
-  }
-  this.cooldown -= dt;
-  this.invincible -= dt;
-  if (keys.has(bindings.fire) && this.cooldown <= 0) {
-   game.bullets.push(new Bullet(this, { damage: build.damage }));
-   this.cooldown = build.fireInterval;
-   game.sound.play('laser');
-  }
+  const { build, keys, bindings } = game;
+  let dx=Number(keys.has(bindings.right))-Number(keys.has(bindings.left));
+  let dy=Number(keys.has(bindings.down))-Number(keys.has(bindings.up));
+  const length=Math.hypot(dx,dy); if(length){dx/=length;dy/=length;}
+  this.thrust=length>0;
+  const response=1-Math.exp(-(length ? build.acceleration/65 : 12)*dt);
+  this.vx+=(dx*build.speed-this.vx)*response;
+  this.vy+=(dy*build.speed-this.vy)*response;
+  this.x+=this.vx*dt; this.y+=this.vy*dt;
+  const r=28;
+  if(this.x<r||this.x>CONFIG.world.width-r){this.x=Math.max(r,Math.min(CONFIG.world.width-r,this.x));this.vx=0;}
+  if(this.y<r||this.y>CONFIG.world.height-r){this.y=Math.max(r,Math.min(CONFIG.world.height-r,this.y));this.vy=0;}
+  if(this.thrust)game.particles.exhaust(this,dt);
+  if(!keys.has(bindings.fire)&&length)this.angle=Math.atan2(dy,dx);
+  this.cooldown-=dt;this.invincible-=dt;
+  if(keys.has(bindings.fire))this.fire(game);
+ }
+ fire(game){
+  const pointer=game.worldPointer();
+  if(pointer)this.angle=bearing(this,pointer);
+  if(this.cooldown>0)return;
+  game.bullets.push(new Bullet(this,{damage:game.build.damage}));
+  this.cooldown=game.build.fireInterval;game.sound.play('laser');
  }
  draw(c,time,scale=1,display=false){c.save();c.translate(this.x,this.y);c.rotate(this.angle+Math.PI/2);c.scale(scale,scale);if(this.invincible>0&&!display){c.strokeStyle='#66eaff66';c.lineWidth=1;c.beginPath();c.arc(0,0,34,0,TAU);c.stroke();}
  const poly=(pts,fill,stroke='#45677f')=>{c.beginPath();pts.forEach((p,i)=>i?c.lineTo(...p):c.moveTo(...p));c.closePath();c.fillStyle=fill;c.fill();c.strokeStyle=stroke;c.lineWidth=.75;c.stroke();};

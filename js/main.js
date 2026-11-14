@@ -21,12 +21,15 @@ window.addEventListener('keydown', event => {
   if (game.state !== 'playing' || !Object.values(game.bindings).includes(code)) return;
   event.preventDefault();
   game.keys.add(code);
+  if(code===game.bindings.fire&&!event.repeat)game.player.fire(game);
   if (code === game.bindings.gadget && !event.repeat) game.useGadget();
 });
 window.addEventListener('keyup', event => game.keys.delete(event.code));
 
 function aim(event) {
-  game.pointer = { x: event.clientX, y: event.clientY };
+  const rect=game.canvas.getBoundingClientRect();
+  game.pointer = { x: (event.clientX-rect.left)*game.w/rect.width, y: (event.clientY-rect.top)*game.h/rect.height };
+  game.pointerOver=event.target===game.canvas;
 }
 
 window.addEventListener('pointermove', aim);
@@ -39,6 +42,7 @@ window.addEventListener('pointerdown', event => {
   if (game.state !== 'playing') return;
   aim(event);
   game.keys.add('Mouse0');
+  if(game.bindings.fire==='Mouse0')game.player.fire(game);
   if (game.bindings.gadget === 'Mouse0') game.useGadget();
 });
 window.addEventListener('pointerup', event => {

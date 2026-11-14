@@ -24,14 +24,15 @@
   <div id="hud" hidden>
     <div><label>SCORE</label><strong id="score">000000</strong></div>
     <div id="bestStat"><label>PERSONAL BEST</label><b id="best">000000</b></div>
-    <div class="hull"><label>HULL <span id="hullCount"></span></label><div id="health"></div></div>
-    <div><label>WAVE</label><b id="wave">01</b></div>
+    <div class="hull"><label>⬡ HULL <span id="hullCount"></span></label><div id="health"></div></div>
+    <div><label>◈ WAVE</label><b id="wave">01</b></div>
+    <div><label>◇ FLEET</label><b id="fleetCount">0</b></div>
     <button id="pause" class="quiet" aria-label="Pause">Ⅱ</button>
   </div>
   <div id="flightProgress" hidden>
     <div class="progress-row"><label for="experience" id="level">LEVEL 1</label><span id="xpCount"></span></div>
     <progress id="experience" max="8" value="0"></progress>
-    <span id="gadgetStatus"></span>
+    <span id="gadgetStatus"></span><progress id="missileCooldown" aria-label="Missile reload" max="9" value="9"></progress>
   </div>
   <div id="boss" hidden>
     <label for="bossHealth">CARRIER</label>
@@ -39,6 +40,7 @@
   </div>
   <aside id="lesson" hidden>
     <div id="lessonStep" class="eyebrow"></div>
+    <div class="key-diagram" aria-hidden="true"><kbd>W</kbd><br><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> · ◉ FIRE</div>
     <p id="lessonText" aria-live="polite"></p>
     <details id="droneGuide" hidden>
       <summary>Drone field guide</summary>
@@ -64,7 +66,7 @@
 
   <section id="settingsPanel" class="modal" aria-labelledby="settingsTitle" role="dialog" aria-modal="true" hidden>
     <h2 id="settingsTitle">Settings</h2>
-    <p>Move the mouse to aim. Escape pauses.</p>
+    <p>WASD moves independently. Hold Fire to aim at the pointer. Escape pauses.</p>
     <div id="bindings"></div>
     <p id="bindingHint" class="hint" aria-live="polite"></p>
     <button id="resetBindings" class="quiet">Reset controls</button>
@@ -78,6 +80,7 @@
   <script src="js/bullet.js"></script>
   <script src="js/player.js"></script>
   <script src="js/asteroid.js"></script>
+  <script src="js/config.js"></script>
   <script src="js/combat.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/game.js"></script>

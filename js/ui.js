@@ -1,6 +1,6 @@
 const el = id => document.getElementById(id);
 const fmt = n => String(n).padStart(6, '0');
-const bindingLabels = { thrust: 'Thrust', fire: 'Fire', gadget: 'Homing missiles' };
+const bindingLabels = { up:'Move up', left:'Move left', down:'Move down', right:'Move right', fire: 'Fire', gadget: 'Homing missiles' };
 const bindingName = code => ({ Mouse0: 'Left mouse', Space: 'Space', ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→' })[code] || code.replace(/^(Key|Digit)/, '');
 
 class UI {
@@ -99,7 +99,7 @@ class UI {
     if (g.mode === 'tutorial') {
       const steps = ['thrust', 'shoot', 'gadget', 'practice'];
       const messages = [
-        'Aim with the mouse. Hold ' + bindingName(g.bindings.thrust) + ' to thrust toward it. Your ship keeps drifting after you release.',
+        'Move independently of aim: ' + ['up','left','down','right'].map(k=>bindingName(g.bindings[k])).join(' / ') + '. Hold a direction to begin.',
         'Aim at the asteroid and hold ' + bindingName(g.bindings.fire) + ' to fire. Destroying targets fills the XP bar.',
         'Your drone flies with you. Press ' + bindingName(g.bindings.gadget) + ' to launch homing missiles at the raider.',
         'Destroy the raider to finish training. Use your primary fire while the missiles reload.'
@@ -109,14 +109,18 @@ class UI {
       if (el('lessonStep').textContent !== label) el('lessonStep').textContent = label;
       if (el('lessonText').textContent !== messages[step]) el('lessonText').textContent = messages[step];
       el('droneGuide').hidden = step < 2;
+      document.querySelector('.key-diagram').innerHTML='<kbd>'+bindingName(g.bindings.up)+'</kbd><br>'+['left','down','right'].map(k=>'<kbd>'+bindingName(g.bindings[k])+'</kbd>').join('')+' · '+bindingName(g.bindings.fire);
     }
     this.updateCombat();
   }
 
   updateCombat() {
     const g = this.game;
+    el('fleetCount').textContent=g.drones.length;
+    el('missileCooldown').max=g.build?.gadgetInterval||9;
+    el('missileCooldown').value=g.build?(g.build.gadgetInterval-g.gadgetCooldown):0;
     const active = g.mode === 'endless' || ['gadget', 'practice'].includes(g.tutorialStep);
-    const status = active ? 'MISSILES [' + bindingName(g.bindings.gadget).toUpperCase() + '] / ' +
+    const status = active ? '➤ [' + bindingName(g.bindings.gadget).toUpperCase() + '] / ' +
       (g.gadgetCooldown > 0 ? Math.ceil(g.gadgetCooldown) + 's' : 'READY') : '';
     if (el('gadgetStatus').textContent !== status) el('gadgetStatus').textContent = status;
     const boss = g.enemies.find(enemy => enemy.type === 'carrier');
@@ -137,8 +141,12 @@ class UI {
       const name = document.createElement('strong');
       name.textContent = reward.name;
       const details = document.createElement('span');
-      details.textContent = reward.description;
-      button.append(name, details);
+      const info=rewardVisual(reward.name);
+      const icon=document.createElement('span');icon.className='reward-icon';icon.innerHTML=info.icon;
+      details.textContent=info.effect;
+      const tip=document.createElement('span');tip.className='reward-tip';tip.textContent=reward.description;
+      button.title=reward.description;button.setAttribute('aria-label',reward.name+': '+reward.description);
+      button.append(icon,name,details,tip);
       button.onclick = () => g.chooseReward(i);
       return button;
     }));
@@ -148,7 +156,10 @@ class UI {
   show() {
     const g = this.game;
     const { state } = g;
+    document.body.classList.toggle('in-flight',state==='playing');
+    if(state!=='playing')g.keys.clear();
     const flight = !['menu', 'settings'].includes(state);
+    document.body.classList.toggle('has-flight',flight);
     const modal = ['paused', 'over', 'complete'].includes(state);
     el('menu').hidden = state !== 'menu';
     el('settingsPanel').hidden = state !== 'settings';
@@ -178,7 +189,7 @@ class UI {
     }
     if (state === 'settings') {
       this.cancelBinding();
-      el('bind-thrust').focus();
+      el('bind-up').focus();
     }
     if (state === 'reward') this.renderRewards();
     if (state === 'playing' && document.activeElement instanceof HTMLButtonElement) document.activeElement.blur();
@@ -190,5 +201,24 @@ class Sound{
  constructor(){this.muted=false;try{this.muted=localStorage.getItem('deepSpaceMuted')==='true';}catch(e){}}
  init(){try{if(!this.ctx){this.ctx=new (window.AudioContext||window.webkitAudioContext)();this.master=this.ctx.createGain();this.master.gain.value=.22;this.master.connect(this.ctx.destination);this.engine=this.ctx.createOscillator();this.engine.type='sawtooth';this.engine.frequency.value=48;this.engineGain=this.ctx.createGain();this.engineGain.gain.value=0;this.engine.connect(this.engineGain);this.engineGain.connect(this.master);this.engine.start();}if(this.ctx.state==='suspended')this.ctx.resume().catch(()=>{});}catch(e){}}
  setEngine(on){if(this.ctx)this.engineGain.gain.setTargetAtTime(on&&!this.muted?.075:0,this.ctx.currentTime,.07);}
- play(kind){if(!this.ctx||this.muted)return;const t=this.ctx.currentTime,o=this.ctx.createOscillator(),v=this.ctx.createGain();o.connect(v);v.connect(this.master);const laser=kind==='laser',boom=kind==='boom';o.type=laser?'sawtooth':boom?'triangle':'sine';o.frequency.setValueAtTime(laser?1000:boom?110:420,t);o.frequency.exponentialRampToValueAtTime(laser?200:boom?25:660,t+.18);v.gain.setValueAtTime(laser?.08:boom?.55:.18,t);v.gain.exponentialRampToValueAtTime(.001,t+.25);o.start(t);o.stop(t+.26);o.onended=()=>{o.disconnect();v.disconnect();};}
+ play(kind){if(!this.ctx||this.muted)return;const t=this.ctx.currentTime,o=this.ctx.createOscillator(),v=this.ctx.createGain();o.connect(v);v.connect(this.master);const laser=kind==='laser',boom=kind==='boom';const tones={raider:330,sniper:1450,rammer:75,interceptor:760,miner:230,warning:900};o.type=laser?'sawtooth':boom?'triangle':'sine';o.frequency.setValueAtTime(tones[kind]|| (laser?1000:boom?110:420),t);o.frequency.exponentialRampToValueAtTime(laser?200:boom?25:660,t+.18);v.gain.setValueAtTime(laser?.08:boom?.55:.18,t);v.gain.exponentialRampToValueAtTime(.001,t+.25);o.start(t);o.stop(t+.26);o.onended=()=>{o.disconnect();v.disconnect();};}
+}
+function rewardVisual(name){
+ const paths={
+  'Hull Plating':['M5 4H19V13L12 21 5 13Z M8 11H16 M12 7V15','+1 max HP'],
+  'Ion Thrusters':['M8 15V6L12 2 16 6V15Z M9 18L12 23 15 18','+55 thrust · +35 speed'],
+  'Rapid Fire':['M3 6H14 M6 12H20 M3 18H14','15% faster fire'],
+  'Heavy Rounds':['M8 20V7L12 2 16 7V20Z M8 16H16','+1 shot damage'],
+  'Missile Rack':['M4 19V9L7 5 10 9V19Z M14 16V6L17 2 20 6V16Z','+2 missiles'],
+  'Quick Reload':['M19 8A8 8 0 1 0 20 16 M19 2V8H13','20% faster reload'],
+  'Seeker Warheads':['M12 2V6 M2 12H6 M18 12H22 M12 18V22 M8 8L16 16 M16 8L8 16','+1 missile damage'],
+  'Gunner Drone':['M21 12L3 3 7 12 3 21Z','+1 Gunner'],
+  'Scout Drone':['M23 12L2 7 7 12 2 17Z','+1 Scout'],
+  'Tank Drone':['M20 7L15 3H5L2 12 5 21H15L20 17Z M8 12H23','+1 Tank'],
+  'Support Drone':['M9 3H15V9H21V15H15V21H9V15H3V9H9Z','+1 Support'],
+  'Drone Targeting':['M3 7V3H7 M17 3H21V7 M21 17V21H17 M7 21H3V17 M8 12H16 M12 8V16','Fleet +1 damage'],
+  'Drone Overclock':['M13 2L5 13H11L10 22 20 9H14Z','Fleet 20% faster']
+ };
+ const [path,effect]=paths[name]||['M12 2L22 12 12 22 2 12Z','Restore flight systems'];
+ return {effect,icon:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+path+'" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>'};
 }

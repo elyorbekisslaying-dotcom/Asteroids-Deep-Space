@@ -34,7 +34,7 @@ class Bullet {
     c.strokeStyle = this.color;
     c.lineWidth = this.homing ? 3 : 2;
     c.shadowColor = this.color;
-    c.shadowBlur = 12;
+    c.shadowBlur = this.homing ? 6 : 0;
     c.beginPath();
     c.moveTo(this.x, this.y);
     c.lineTo(this.x - this.vx * .018, this.y - this.vy * .018);
