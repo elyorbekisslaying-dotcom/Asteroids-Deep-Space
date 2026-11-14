@@ -1,6 +1,39 @@
 class Player{
  constructor(w,h){this.x=w/2;this.y=h/2;this.vx=0;this.vy=0;this.angle=-Math.PI/2;this.cooldown=0;this.invincible=2.5;this.thrust=false;}
- update(dt,g){const k=g.keys;this.angle+=((k.has('KeyD')||k.has('ArrowRight')?1:0)-(k.has('KeyA')||k.has('ArrowLeft')?1:0))*3.5*dt;this.thrust=k.has('KeyW')||k.has('ArrowUp');if(this.thrust){this.vx+=Math.cos(this.angle)*260*dt;this.vy+=Math.sin(this.angle)*260*dt;g.particles.exhaust(this,dt);}const speed=Math.hypot(this.vx,this.vy);if(speed>350){this.vx*=350/speed;this.vy*=350/speed;}this.vx*=Math.exp(-.19*dt);this.vy*=Math.exp(-.19*dt);this.x=(this.x+this.vx*dt+g.w)%g.w;this.y=(this.y+this.vy*dt+g.h)%g.h;this.cooldown-=dt;this.invincible-=dt;if(k.has('Space')&&this.cooldown<=0){g.bullets.push(new Bullet(this));this.cooldown=.15;g.sound.play('laser');}}
+ update(dt, game) {
+  const { pointer, build, keys, bindings } = game;
+  if (pointer && Math.hypot(pointer.x - this.x, pointer.y - this.y) > 4) {
+   this.angle = Math.atan2(pointer.y - this.y, pointer.x - this.x);
+  }
+  this.thrust = keys.has(bindings.thrust);
+  if (this.thrust) {
+   this.vx += Math.cos(this.angle) * build.acceleration * dt;
+   this.vy += Math.sin(this.angle) * build.acceleration * dt;
+   game.particles.exhaust(this, dt);
+  }
+  const speed = Math.hypot(this.vx, this.vy);
+  if (speed > build.speed) {
+   this.vx *= build.speed / speed;
+   this.vy *= build.speed / speed;
+  }
+  this.vx *= Math.exp(-.19 * dt);
+  this.vy *= Math.exp(-.19 * dt);
+  const nextX = this.x + this.vx * dt;
+  const nextY = this.y + this.vy * dt;
+  this.x = (nextX + game.w) % game.w;
+  this.y = (nextY + game.h) % game.h;
+  for (const drone of game.drones) {
+   drone.x += this.x - nextX;
+   drone.y += this.y - nextY;
+  }
+  this.cooldown -= dt;
+  this.invincible -= dt;
+  if (keys.has(bindings.fire) && this.cooldown <= 0) {
+   game.bullets.push(new Bullet(this, { damage: build.damage }));
+   this.cooldown = build.fireInterval;
+   game.sound.play('laser');
+  }
+ }
  draw(c,time,scale=1,display=false){c.save();c.translate(this.x,this.y);c.rotate(this.angle+Math.PI/2);c.scale(scale,scale);if(this.invincible>0&&!display){c.strokeStyle='#66eaff66';c.lineWidth=1;c.beginPath();c.arc(0,0,34,0,TAU);c.stroke();}
  const poly=(pts,fill,stroke='#45677f')=>{c.beginPath();pts.forEach((p,i)=>i?c.lineTo(...p):c.moveTo(...p));c.closePath();c.fillStyle=fill;c.fill();c.strokeStyle=stroke;c.lineWidth=.75;c.stroke();};
  c.globalCompositeOperation='lighter';for(const x of [-10,10]){const len=(this.thrust||display?26:10)+Math.sin(time*35+x)*4;const g=c.createLinearGradient(x,16,x,20+len);g.addColorStop(0,'#c7ffff');g.addColorStop(.25,'#32ceffbb');g.addColorStop(1,'#218cff00');c.fillStyle=g;c.beginPath();c.moveTo(x-3,16);c.quadraticCurveTo(x-7,26,x,20+len);c.quadraticCurveTo(x+7,26,x+3,16);c.fill();}c.globalCompositeOperation='source-over';
