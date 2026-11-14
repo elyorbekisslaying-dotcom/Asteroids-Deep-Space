@@ -317,10 +317,11 @@ class Game {
       this.thrustTime += dt;
       if (this.thrustTime >= .55) {
         this.tutorialStep = 'shoot';
-        const x = this.player.x < this.w / 2 ? this.w * .75 : this.w * .25;
-        const rock = new Asteroid(x, this.h * .48, 0);
-        rock.vx *= .35;
-        rock.vy *= .35;
+        const x = Math.max(this.w * .16, Math.min(this.w * .84, this.player.x));
+        const y = this.player.y < this.h / 2 ? this.h * .72 : this.h * .28;
+        const rock = new Asteroid(x, y, 0);
+        rock.vx = 0;
+        rock.vy = 0;
         this.asteroids.push(rock);
         this.ui.update();
       }
