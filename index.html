@@ -1,10 +1,86 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ASTEROIDS: DEEP SPACE</title><link rel="stylesheet" href="style.css"></head>
-<body><canvas id="space" aria-label="Asteroids space combat arena"></canvas><div class="vignette"></div>
-<header><a class="brand" href="#" aria-label="Asteroids home">◈ <span>AEGIS <small>FLIGHT SYSTEMS</small></span></a><div class="status"><i></i> DEEP SPACE NETWORK <span>/</span> SECTOR 09</div><button id="mute" class="quiet" aria-label="Toggle audio">SOUND ON</button></header>
-<div id="hud" hidden><div><label>SCORE</label><strong id="score">000000</strong></div><div><label>PERSONAL BEST</label><b id="best">000000</b></div><div class="hull"><label>HULL INTEGRITY</label><div id="health"></div></div><div><label>SECTOR WAVE</label><b id="wave">01</b></div><button id="pause" class="quiet">II PAUSE</button></div>
-<main id="menu" class="panel"><div class="eyebrow">INDEPENDENT FLIGHT PROTOCOL / 001</div><h1>ASTEROIDS<span>DEEP SPACE</span></h1><p class="intro">Alone in the void.<br>Make every shot count.</p><button id="play" class="primary">INITIATE FLIGHT <span>↗</span></button><div class="record">PERSONAL BEST <b id="menuBest">000000</b></div><div class="controls"><div><kbd>W</kbd><kbd>↑</kbd><span>THRUST</span></div><div><kbd>A</kbd><kbd>D</kbd><span>ROTATE</span></div><div><kbd>SPACE</kbd><span>FIRE</span></div><div><kbd>ESC</kbd><span>PAUSE</span></div></div></main>
-<div id="shipLabel"><span>01 / YOUR VESSEL</span><h2>AEGIS MK. IV</h2><p>INTERCEPTOR CLASS · TWIN ION DRIVE</p><div>HULL <b>100%</b> &nbsp; / &nbsp; WEAPONS <b>ONLINE</b></div></div>
-<section id="overlay" class="modal" hidden><div class="eyebrow" id="overlayTag"></div><h2 id="overlayTitle"></h2><p id="overlayText"></p><div id="stats"></div><button id="resume" class="primary">RESUME FLIGHT ↗</button><button id="restart" class="primary">FLY AGAIN ↗</button><button id="home" class="quiet">RETURN TO HANGAR</button></section>
-<div id="announcement" aria-live="polite"></div><footer><span>09 : 72 : 04 <em> / </em> UNCHARTED TERRITORY</span><span id="footerRight">SURVIVAL IS THE ONLY MISSION</span></footer>
-<script src="js/background.js"></script><script src="js/particles.js"></script><script src="js/bullet.js"></script><script src="js/player.js"></script><script src="js/asteroid.js"></script><script src="js/ui.js"></script><script src="js/game.js"></script><script src="js/main.js"></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ASTEROIDS: DEEP SPACE</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="space" aria-label="Asteroids space combat arena"></canvas>
+  <div class="vignette"></div>
+  <header><div class="brand">◈ <span>AEGIS <small>FLIGHT SYSTEMS</small></span></div></header>
+
+  <main id="menu" class="panel">
+    <h1>ASTEROIDS<span>DEEP SPACE</span></h1>
+    <div class="menu-actions">
+      <button id="tutorial" class="primary">Tutorial</button>
+      <button id="play" class="primary" aria-describedby="playHint">Play</button>
+      <p id="playHint" class="hint">Complete Tutorial to unlock Endless.</p>
+      <button id="settings" class="quiet">Settings</button>
+    </div>
+  </main>
+
+  <div id="hud" hidden>
+    <div><label>SCORE</label><strong id="score">000000</strong></div>
+    <div id="bestStat"><label>PERSONAL BEST</label><b id="best">000000</b></div>
+    <div class="hull"><label>HULL <span id="hullCount"></span></label><div id="health"></div></div>
+    <div><label>WAVE</label><b id="wave">01</b></div>
+    <button id="pause" class="quiet" aria-label="Pause">Ⅱ</button>
+  </div>
+  <div id="flightProgress" hidden>
+    <div class="progress-row"><label for="experience" id="level">LEVEL 1</label><span id="xpCount"></span></div>
+    <progress id="experience" max="8" value="0"></progress>
+    <span id="gadgetStatus"></span>
+  </div>
+  <div id="boss" hidden>
+    <label for="bossHealth">CARRIER</label>
+    <progress id="bossHealth" max="60" value="60"></progress>
+  </div>
+  <aside id="lesson" hidden>
+    <div id="lessonStep" class="eyebrow"></div>
+    <p id="lessonText" aria-live="polite"></p>
+    <details id="droneGuide" hidden>
+      <summary>Drone field guide</summary>
+      <dl id="droneManual"></dl>
+    </details>
+  </aside>
+
+  <section id="overlay" class="modal" aria-labelledby="overlayTitle" role="dialog" aria-modal="true" hidden>
+    <h2 id="overlayTitle"></h2>
+    <p id="overlayText"></p>
+    <div id="stats"></div>
+    <button id="resume" class="primary">Resume</button>
+    <button id="restart" class="primary">Try again</button>
+    <button id="launchEndless" class="primary">Play Endless</button>
+    <button id="home" class="quiet">Main menu</button>
+  </section>
+
+  <section id="reward" class="modal" aria-labelledby="rewardTitle" role="dialog" aria-modal="true" hidden>
+    <div id="rewardLevel" class="eyebrow"></div>
+    <h2 id="rewardTitle">Choose one reward</h2>
+    <div id="rewardCards"></div>
+  </section>
+
+  <section id="settingsPanel" class="modal" aria-labelledby="settingsTitle" role="dialog" aria-modal="true" hidden>
+    <h2 id="settingsTitle">Settings</h2>
+    <p>Move the mouse to aim. Escape pauses.</p>
+    <div id="bindings"></div>
+    <p id="bindingHint" class="hint" aria-live="polite"></p>
+    <button id="resetBindings" class="quiet">Reset controls</button>
+    <button id="mute" class="quiet" aria-label="Toggle audio">Sound on</button>
+    <button id="closeSettings" class="primary">Back</button>
+  </section>
+
+  <div id="announcement" aria-live="polite"></div>
+  <script src="js/background.js"></script>
+  <script src="js/particles.js"></script>
+  <script src="js/bullet.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/asteroid.js"></script>
+  <script src="js/combat.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,34 +1,43 @@
 # ASTEROIDS: DEEP SPACE
 
-A self-contained, offline Canvas arcade shooter. Original procedural artwork and synthesized audio; no downloaded assets, dependencies, server, build tools, or installation.
+An offline Canvas arcade shooter with procedural artwork and synthesized audio.
+Open `index.html` in a modern desktop browser. Keep `style.css` and `js/`
+alongside it. The game requires a keyboard and mouse and runs without a server.
 
-## Play
-Extract the entire folder, then double-click **index.html**. Keep style.css and js/ alongside it. Use a modern desktop Chrome, Firefox, Edge, or Safari browser with a keyboard.
+## Controls
 
-- W / Up: thrust
-- A / Left, D / Right: rotate
-- Space (hold): fire
-- Escape: pause/resume
-- SOUND ON/OFF: toggle synthesized audio
+- Mouse movement aims the ship.
+- W thrusts toward the cursor. The ship retains momentum and wraps around edges.
+- Hold left mouse to fire.
+- E launches a salvo of homing missiles.
+- Escape pauses. Leaving the window also pauses an active flight.
 
-Your ship retains momentum and wraps across screen edges. Large rocks take 3 hits and split into two medium rocks (2 hits), which split into two small rocks (1 hit). Destruction awards 35 / 60 / 100 points respectively. Clear all rocks to advance; each new wave repairs one hull segment. You have five hull segments and two seconds of shielding after damage. Waves grow in size and speed, with sensible upper bounds. Switching tabs or windows automatically pauses.
+Settings saves bindings for thrust, fire and missiles, plus the sound toggle.
+Click the control you want to change, then press a key or click the arena to
+bind left mouse. Choosing an occupied binding swaps the two controls.
 
-High score and mute settings are saved when browser localStorage is permitted. Private browsing and some file-URL policies may prevent persistence; gameplay still works. Audio starts only after a user gesture. Keyboard desktop play is the intended input; touch controls are not included.
+## Modes
 
-## Source
-Classic ordered scripts deliberately avoid ES-module file-URL restrictions:
-- background.js: cached nebula and parallax stars
-- player.js: detailed vector spacecraft, movement and weapons
-- asteroid.js: cached irregular rock textures
-- bullet.js: projectile motion and swept collision detection
-- particles.js: capped particle pool
-- ui.js: menus, HUD and Web Audio synthesis
-- game.js: simulation, waves, collision and rendering
-- main.js: input, resize and animation lifecycle
+Tutorial is a short flight that teaches thrust, fire, XP, drone recruitment and
+missiles. Completing it unlocks Play (Endless). The unlock, bindings, audio
+preference and Endless high score are saved when local storage is available.
 
-assets/images and assets/audio are intentionally empty: all visuals and audio are generated locally. Rendering uses a 1.5× maximum pixel ratio, cached backgrounds/rocks, at most 450 particles, a delta-time simulation and bounded wave populations.
+In Endless, destroying enemies and asteroid fragments grants XP. On each level
+the fight pauses for a choice of three rewards drawn from ship upgrades,
+missile upgrades and drone recruits or upgrades. Ship and drone upgrades last
+for that flight. The starting hull has five segments. Hull Plating adds one
+segment and repairs it. Each cleared wave repairs one segment.
 
-All game code and procedural artwork created for this project. You may modify and use them in your game jam submission.
+Gunner and Scout drones fire automatically, with Scout prioritizing rate of
+fire. Tank trades formation speed for heavier fire and can absorb incoming
+shots. Support repairs damaged hull over time. Up to four different drones can
+fly in formation at once.
 
-## Validation
-All eight scripts were loaded in their HTML order and exercised in a JavaScript test harness using a native Canvas implementation. Checks passed for keyboard input, acceleration and shooting, large/medium/small asteroid destruction, score calculation, wave advancement, hull damage, game over, restart, pause/resume, resize, and storage writes. Canvas artwork rendered successfully. A real Chromium run was attempted but blocked by the execution environment's process-socket policy; full browser layout, audible audio and real localStorage persistence were not verified.
+Raiders shoot at the player. Snipers lock their firing angle and show a
+warning line before firing. Rammers charge after a visible wind-up. Every
+fifth wave contains a Carrier boss, which launches fighters and repair drones.
+Destroying the repair drones slows the Carrier's recovery.
+
+Scripts load as classic JavaScript for offline file compatibility. Existing
+asteroid splitting, momentum, procedural nebula, player ship art and sound
+synthesis are used throughout.
